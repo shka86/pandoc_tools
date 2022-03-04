@@ -5,7 +5,8 @@ body {
   padding-top: 10px;
   padding-bottom: 10px;
   background-color: white;
-  padding: 30px; }
+  padding: 30px;
+}
 
 body > *:first-child {
   margin-top: 0 !important; }
@@ -34,10 +35,6 @@ h1, h2, h3, h4, h5, h6 {
   cursor: text;
   position: relative; }
 
-h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
-  /* background: url("../../images/modules/styleguide/para.png") no-repeat 10px center; */
-  text-decoration: none; }
-
 h1 tt, h1 code {
   font-size: inherit; }
 
@@ -57,7 +54,7 @@ h6 tt, h6 code {
   font-size: inherit; }
 
 h1 {
-  font-size: 28px;
+  font-size: 36px;
   color: black; }
 
 h2 {
@@ -80,13 +77,6 @@ h6 {
 
 p, blockquote, ul, ol, dl, li, table, pre {
   margin: 15px 0; }
-
-hr {
-  /* background: transparent url("../../images/modules/pulls/dirty-shade.png") repeat-x 0 0; */
-  border: 0 none;
-  color: #cccccc;
-  height: 4px;
-  padding: 0; }
 
 body > h2:first-child {
   margin-top: 0;
@@ -275,3 +265,107 @@ pre {
   pre code, pre tt {
     background-color: transparent;
     border: none; }
+
+
+/* ################ */
+
+font-family: "Migu 1C", sans-serif;
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Migu 1C", sans-serif;
+}
+code, blockquote, atom-text-editor {
+  font-family: "Migu 1M", "Meiryo", monospace;
+}
+
+@c_border: #666; // border^color
+
+max-width: 500px;
+margin: 0 auto;
+padding: 25px;
+color: black;
+hr {
+  margin: 50px 0;
+  background-color: transparent;
+  &:after{
+    content: "";
+    display: block;
+    border-top-style: ridge;
+  }
+  &.pb {
+    // <hr class="pb"> を入れることでプリント時の改ページを指定することができる
+    page-break-after: always;
+    &:after {
+      display: none;
+    }
+  }
+}
+
+h1, h2, h3, h4, h5 {
+  font-weight: normal;
+  border-color: @c_border;
+}
+h1 {
+  font-size: 24px;
+  border: none;
+  margin: 30px auto;
+  text-align: center;
+  letter-spacing: 5px;
+}
+h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 50px auto 25px;
+}
+h3 {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+h4 {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+p, table, ul, ol, dl, pre, blockquote {
+  margin-left: 25px;
+  ul, ol, dl {
+    margin-left: 0px;
+  }
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  max-width: 800px;
+  th {
+    text-align: center;
+    background-color: #eee;
+    border-color: @c_border;
+  }
+  tr {
+    border-top: #666;
+  }
+  td {
+    border-color: @c_border;
+  }
+}
+.margin-clear {
+  margin-left: 0;
+}
+/* テキストの中央揃え */
+.center {
+  text-align: center;
+  &:extend(.margin-clear);
+}
+/* テキストの右寄せ */
+.right {
+  text-align: right;
+  &:extend(.margin-clear);
+}
+
+code {
+  white-space: pre-line !important;
+}
+
+#container{width: 900px;}
+#tabocon{width: 300px;}

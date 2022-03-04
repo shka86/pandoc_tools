@@ -4,21 +4,13 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html"; charset="UTF-8" >
+    <meta http-equiv=”Content-Type” content=”text/html; charset=UTF-8” >
+    <!-- <meta http-equiv="Content-Type" content="text/html"; charset="UTF-8" > -->
     <meta name="generator" content="pandoc" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
     $for(author-meta)$
     <meta name="author" content="$author-meta$" />
     $endfor$
-    $if(date-meta)$
-    <meta name="dcterms.date" content="$date-meta$" />
-    $endif$
-    $if(keywords)$
-    <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
-    $endif$
-    <!-- $if(description-meta)$
-    <meta name="description" content="$description-meta$" />
-    $endif$ -->
     $if(date-meta)$
     <meta name="dcterms.date" content="$date-meta$" />
     $endif$
@@ -38,7 +30,7 @@
             vertical-align: top;
             width: 50%;
         }
-        $if(quotes)$ q{
+        $if(quotes)$ q {
             quotes: "“""”""‘""’";
         }
         $endif$
@@ -86,18 +78,21 @@
         $endif$
     </header>
     $endif$
-    $if(toc)$
-    <nav id="$idprefix$TOC" role="doc-toc">
-        $if(toc-title)$
-        <h2 id="$idprefix$toc-title">$toc-title$</h2>
+    <div style="display: flex">
+        $if(toc)$
+        <div id="tabocon">
+            <nav id="$idprefix$TOC" role="doc-toc" style="top:1rem; position: sticky;">
+                $table-of-contents$
+            </nav>
+        </div>
         $endif$
-        $table-of-contents$
-    </nav>
-    $endif$
-    $body$
-    $for(include-after)$
-    $include-after$
-    $endfor$
+        <div id="container">
+            $body$
+        </div>
+        $for(include-after)$
+        $include-after$
+        $endfor$
+    </div>
 </body>
 
 </html>
