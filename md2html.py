@@ -15,25 +15,37 @@ import tempfile
     TemporaryDirectory で作業場所を作って実行する。
 """
 
-args = sys.argv
-tgt = p(args[1]).resolve()
-pagetitle = F"{tgt.stem}"
-outfile = p(f"{tgt.parent}/{tgt.stem}.html")
-cwd = p.cwd()
 
-with tempfile.TemporaryDirectory() as td:
-    # pandoc実行環境のコピー(UNCパス禁止への対応)
-    tmp_wd = p(td) / p('pandoc_tools')
-    shutil.copytree(cwd, tmp_wd)
+def main(tgt):
+    tgt = p(tgt).resolve()
+    print("---")
+    print(f"convert tgt: {tgt}")
+    print("---")
+    if (not tgt.is_file()) or (str(tgt) == "."):
+        return 0
 
-    # 変換対象ファイルのコピー
-    shutil.copytree(tgt.parent, tmp_wd / p("work"))
-    os.chdir(tmp_wd / p("work"))
+    pagetitle = f"{tgt.stem}"
+    outfile = p(f"{tgt.parent}/{tgt.stem}.html")
+    cwd = p.cwd()
 
-    css = p(tmp_wd) / p("style/test.css")
-    template = p(tmp_wd) / p("style/test.html")
-    cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" --toc --toc-depth=3 --template={template} -t html5'
+    with tempfile.TemporaryDirectory() as td:
+        # pandoc実行環境のコピー(UNCパス禁止への対応)
+        tmp_wd = p(td) / p('pandoc_tools')
+        shutil.copytree(cwd, tmp_wd)
 
-    subprocess.run(cmd.split(' '))
+        # 変換対象ファイルのコピー
+        shutil.copytree(tgt.parent, tmp_wd / p("work"))
+        os.chdir(tmp_wd / p("work"))
 
-    os.chdir(cwd)
+        css = p(tmp_wd) / p("style/test.css")
+        template = p(tmp_wd) / p("style/test.html")
+        cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" --toc --toc-depth=3 --template={template} -t html5'
+
+        subprocess.run(cmd.split(' '))
+
+        os.chdir(cwd)
+
+if __name__ == '__main__':
+    args = sys.argv
+    tgt = p(args[1])
+    main(tgt)
