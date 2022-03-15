@@ -19,7 +19,7 @@ import tempfile
 def main(tgt):
     tgt = p(tgt).resolve()
     print("---")
-    print(f"convert tgt: {tgt}")
+    print(f"convert tgt: \n{tgt}")
     print("---")
     if (not tgt.is_file()) or (str(tgt) == "."):
         return 0
@@ -30,11 +30,14 @@ def main(tgt):
 
     with tempfile.TemporaryDirectory() as td:
         # pandoc実行環境のコピー(UNCパス禁止への対応)
-        tmp_wd = p(td) / p('pandoc_tools')
+        tmp_wd = p(td) / cwd.stem
         shutil.copytree(cwd, tmp_wd)
 
         # 変換対象ファイルのコピー
         shutil.copytree(tgt.parent, tmp_wd / p("work"))
+        items = tmp_wd.glob("**/*")
+        for item in items:
+            item.chmod(0o777)
         os.chdir(tmp_wd / p("work"))
 
         css = p(tmp_wd) / p("style/test.css")
@@ -44,6 +47,8 @@ def main(tgt):
         subprocess.run(cmd.split(' '))
 
         os.chdir(cwd)
+
+    print(f"output: \n{outfile}")
 
 if __name__ == '__main__':
     args = sys.argv
