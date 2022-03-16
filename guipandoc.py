@@ -8,6 +8,7 @@ from pathlib import Path as p
 
 import md2html
 
+from input_list import *
 
 class TestCombobox2(ttk.Combobox):
     def __init__(self, choice, master=None):  # var(StringVar)を追加
@@ -24,18 +25,8 @@ if __name__ == "__main__":
 
     # StringVarとラベルの生成
     var = tk.StringVar(root)
-    # l = tk.Label(
-    #     textvariable=var,  # textvariableオプションにStringVarをセット
-    #     master=root
-    # )
-    # l.pack()
 
-    choices = [
-        p(r"./mdsample/test.md"),
-        p(r"./mdsample/test2.md"),
-        p(r"./mdsample/test3.md")
-    ]
-    c = TestCombobox2(master=root, choice=choices)  # TestCombobox2を生成
+    c = TestCombobox2(master=root, choice=input_list)  # TestCombobox2を生成
     c.pack()
 
     print(c.selected)
