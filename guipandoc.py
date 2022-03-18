@@ -10,30 +10,28 @@ import md2html
 
 from input_list import *
 
-class TestCombobox2(ttk.Combobox):
-    def __init__(self, choice, master=None):  # var(StringVar)を追加
-        super().__init__(master=master, values=choice)
-        self.selected = self.get()
-        self.bind('<<ComboboxSelected>>', self.when_selected)
+def guipandoc(root):
 
-    def when_selected(self, event):  # event引数は必要
-        self.selected = self.get()
+    cb_selected = tk.StringVar()
+
+    cb = ttk.Combobox(master=root, values=input_list, textvariable=cb_selected)  # TestCombobox2を生成
+    cb.bind('<<ComboboxSelected>>')
+    cb.current(0)
+    cb.pack(ipadx=10, ipady=10, padx=15, pady=15)
+
+    label = tk.Label(root, textvariable=cb_selected, wraplength=450)
+    label.pack()
+
+    btn_convert = tk.Button(master=root, text='convert', command=lambda: md2html.main(cb_selected.get()))
+    btn_convert.pack(ipadx=10, ipady=10, padx=15, pady=15)
 
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.title("guipandoc")
+    root.geometry("500x250")
 
-    # StringVarとラベルの生成
-    var = tk.StringVar(root)
+    guipandoc(root)
 
-    c = TestCombobox2(master=root, choice=input_list)  # TestCombobox2を生成
-    c.pack()
-
-    print(c.selected)
-    print(c.get())
-
-    # button
-    entity = tk.Button(master=root, text='convert', command=lambda: md2html.main(c.selected))
-    entity.pack()
-
+    # Start App
     root.mainloop()

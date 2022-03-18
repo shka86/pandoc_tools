@@ -48,7 +48,7 @@ def main(tgt):
 
         os.chdir(cwd)
 
-    print(f"output: \n{outfile}")
+    print(f"Done!! output: \n{outfile}")
 
 if __name__ == '__main__':
     args = sys.argv
