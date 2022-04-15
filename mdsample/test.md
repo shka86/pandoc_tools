@@ -13,7 +13,11 @@ abstract: |
 
 <!-- # Title -->
 
-
+```cpp
+// hoge
+int hoge();
+/*sdfa*/
+```
 
 ## hoge
 hogehoge
