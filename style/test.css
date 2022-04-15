@@ -1,17 +1,121 @@
-html {
-    margin: 0 auto;
-    padding: 3px;
+* {
+    margin: 0;
+    padding: 0px;
     color: black;
+}
+
+#container {
+    display: flex;
+    align-items: flex-start;
+    overflow-y: hidden;
+}
+
+#sidebar {
+    width: 250px;
+    height: 100vh;
+    position: sticky;
+    flex-grow: 1;
+    flex-direction: column;
+    background-color: #EEEEEE;
+    overflow-y: auto;
+}
+
+#sidebar * {
+    margin: 0px 5px;
+    padding: 0px 0px;
+}
+
+#sidebar_body {
+    margin: 20px 25px;
+}
+
+#main {
+    /* width: 900px; */
+    height: 100vh;
+    position: sticky;
+    overflow-y: auto;
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+#main_body {
+    padding: 20px 25px;
+}
+
+#title {
+    margin: 0;
+    padding: 0;
+    font-family: "Migu 1C", sans-serif;
+    font-weight: normal;
+    font-size: 24px;
+    border: none;
+    text-align: center;
+    letter-spacing: 8px;
+    line-height: 1;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: white;
+}
+
+#subtitle {
+    margin: 0;
+    padding: 0;
+    font-family: "Migu 1C", sans-serif;
+    font-weight: normal;
+    font-size: 18px;
+    color: #666666;
+    border: none;
+    text-align: center;
+    letter-spacing: 0;
+    line-height: 1;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: white;
+}
+
+#author,
+#version {
+    margin: 0;
+    padding: 0;
+    /* font-family: "Migu 1C", sans-serif; */
+    /* font-weight: normal; */
+    /* font-size: 18px; */
+    color: #777777;
+    border: none;
+    text-align: right;
+    /* letter-spacing: 0; */
+    /* line-height: 1;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: white; */
+    font-size: 80%;
+}
+
+#abstract {
+    /* margin: 0 2px; */
+    padding: 0px 5px 0px 5px;
+    white-space: nowrap;
+    border: 1px solid #eaeaea;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    font-size: 90%;
+}
+
+#abstract-title {
+    /* margin: 0 5px; */
+    padding: 2px 5px 0px 5px;
+    font-size: 80%;
 }
 
 body {
     font-family: Helvetica, arial, sans-serif;
     font-size: 14px;
     line-height: 1.6;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    /* padding-top: 10px;
+    padding-bottom: 10px; */
     background-color: white;
-    padding: 30px;
+    /* padding: 30px; */
+    height: 100vh;
 }
 
 body>*:first-child {
@@ -47,7 +151,7 @@ h3,
 h4,
 h5,
 h6 {
-    margin: 20px 0 10px;
+    margin: 10px 0 10px;
     padding: 0;
     font-weight: bold;
     -webkit-font-smoothing: antialiased;
@@ -68,36 +172,33 @@ h1 {
 h2 {
     font-size: 20px;
     font-weight: bold;
-    margin: 50px auto 25px;
+    margin: 20px auto 15px;
     border-bottom: 2px solid #cccccc;
 }
 
 h3 {
     font-size: 16px;
     font-weight: bold;
-    padding-left: 5px;
+    margin-right: 33%;
     border-bottom: 2px dashed #cccccc;
 }
 
 h4 {
     font-size: 14px;
     font-weight: bold;
-    padding-left: 10px;
-    text-decoration: underline double;
+    margin-right: 66%;
+    border-bottom: 2px dashed #cccccc;
 }
 
 h5 {
     font-size: 14px;
     font-weight: bold;
-    padding-left: 15px;
     text-decoration: underline;
 }
 
 h6 {
-    color: #777777;
     font-size: 14px;
-    padding-left: 20px;
-    text-decoration: underline dashed gray;
+    text-decoration: underline dashed;
 }
 
 body>h2:first-child {
@@ -368,13 +469,7 @@ ol,
 dl,
 pre,
 blockquote {
+    margin-top: 5px;
     margin-left: 15px;
-}
-
-#container {
-    width: 900px;
-}
-
-#tabocon {
-    width: 300px;
+    margin-bottom: 5px;
 }
