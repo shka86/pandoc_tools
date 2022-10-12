@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     history = "./history.json"
     if p(history).is_file():
-        with open(history, "r") as f:
+        with open(history, "r", encoding="utf-8") as f:
             histories = json.load(f)['histories']
     else:
         histories = []
