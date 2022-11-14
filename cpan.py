@@ -64,16 +64,22 @@ class Cpan():
                 json.dump(jsondata, f, indent=4, ensure_ascii=False)
 
     def select_from_history(self, histories):
-        for i, x in enumerate(histories):
+        print('-----------------------------------')
+        for i in reversed(range(len(histories))):
+            x = histories[i]
             print(f'{i}: {x}')
+        print('-----------------------------------')
         tgtnum = input('Select a number: ')
         return str(histories[int(tgtnum)])
 
     def conv_a_dir(self, tgt):
         tgts = list(p(tgt).glob('**/*.md'))
-        for i, x in enumerate(tgts):
+        print('-----------------------------------')
+        for i in reversed(range(len(tgts))):
+            x = tgts[i]
             print(f'{i}: {x}')
 
+        print('-----------------------------------')
         tgtnum = input('Select a file number. If all, enter "all": ')
 
         if tgtnum == "all":
