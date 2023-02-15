@@ -1,257 +1,20 @@
----
-title: YAMLTitle
-subtitle: YAMLsubTitle
-version: "0.0"
-author: 著者1
-abstract: |
-  - ほげ
-  - ほげほげ
-# description: |
-#     - ほげ
-#     - ほげほげ
----
+# Title
 
-<!-- # Title -->
+<div style="test-align: right; color: #777777;">
+2022/03/03 author_name  
+※IE11ではレイアウトが崩れる場合があります。html5対応のブラウザ(Edge等)で閲覧ください。  
+</div>
 
-```cpp
-// hoge
-int hoge();
-/*sdfa*/
+<!-- markdown source @ -->
+
+```
+【要約】
 ```
 
+---
 
 ## hoge
-hogehoge
 
-- hogehoge
-  - hogehogehoge
-  - hogehogehoge
-    - hogehogehoge
-    - hogehogehoge
-  - hogehogehoge
-- hogehoge
-  - hogehogehoge
-  - hogehogehoge
-  - hogehogehoge
-- hogehoge
-  - hogehogehoge
-  - hogehogehoge
-  - hogehogehoge
-
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-
-
-#### hogehogehogehogehogehogehogehoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-##### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-###### hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-## hoge
-hogehoge
-
-- hogehoge
-  - hogehogehoge
-
-## hoge
-hogehoge
-
-## hoge
-hogehoge
-
-## hoge
-hogehoge
-
-## hoge
-hogehoge
-
-## hoge
-hogehoge
-
-## hoge
-hogehoge
-
-## hoge
 hogehoge
 
 ## hoge
@@ -389,12 +152,7 @@ green     Leaves, grass, frogs
 --------  -----------------------
 
 
-| きーわーど | てきすと                 |
-| ------- | -------------------- |
-| red     | Sunsets, apples, and |
-| green   | Leaves, grass, frogs |
 
-`tesuto`
 
 A horizontal rule follows.
 
@@ -431,6 +189,3 @@ $$I = \int \rho R^{2} dV$$
 
 And note that you can backslash-escape any punctuation characters
 which you wish to be displayed literally, ex.: \`foo\`, \*bar\*, etc.
-
-
-

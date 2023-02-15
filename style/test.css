@@ -88,7 +88,7 @@
     padding-top: 5px;
     padding-bottom: 5px;
     background-color: white; */
-    font-size: 80%;
+    /* font-size: 80%; */
 }
 
 #abstract {
@@ -463,7 +463,6 @@ hr {
     background-color: transparent;
 }
 
-p,
 ul,
 ol,
 dl,
@@ -472,4 +471,10 @@ blockquote {
     margin-top: 5px;
     margin-left: 15px;
     margin-bottom: 5px;
+}
+
+p {
+    margin-top: 5px;
+    margin-left: 15px;
+    margin-bottom: 15px;
 }

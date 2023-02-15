@@ -14,8 +14,6 @@ def argparser():
                         help='specify a file or dir as convert target')
     parser.add_argument('-l', '--list', action='store_true',
                         help='show the target list')
-    parser.add_argument('-a', '--addlist', type=str,
-                        help='set this option if you want to add current target file to the targetlist')
     args = parser.parse_args()
     return args
 
