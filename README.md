@@ -32,6 +32,23 @@ pandocでhtmlを簡単に作る。
 `python ./cpan.py -l`
 
 
+### hierpan.py
+ツリー上に格納されたmdファイルをhtmlに変換する。
+`python ./hierpan.py`
+
+- 目次を左ペインにiframeで表示する
+    - 各htmlの左ペインを上下半分に分けて、ツリーの目次と、そのページの目次を表示する
+        こんなんでできる模様。
+        ```html
+            <iframe src="https://yellow.gray-code.com/" width="600" height="400"></iframe>
+        ```
+
+    - toc.htmlを作成
+
+    - 階層構造を保ったままhtml生成する。
+        - ファイルリストを生成する → タイムスタンプも出力する。更新されたファイルだけ生成するつくりにする。誰か変換ミスっても全体に影響しないように。
+
+
 ## Install
 
 - windowsの場合  

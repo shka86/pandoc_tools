@@ -7,6 +7,7 @@ import sys
 import subprocess
 from pathlib import Path as p
 import tempfile
+import datetime
 
 """markdownからhtmlを生成する
     UNCパスはサポートされません。～
@@ -16,13 +17,16 @@ import tempfile
 """
 
 class Md2Html():
-    def __init__(self, markdown) -> None:
+    def __init__(self, markdown, css, template) -> None:
+        self.css = css
+        self.template = template
         self.path_markdown = p(markdown).absolute().as_posix()
         self.path_html = None
+        self.stamp = datetime.datetime.fromtimestamp(p(markdown).stat().st_ctime).strftime('%Y%m%d-%H%M%S')
 
-        self.generate_html(self.path_markdown)
+        self.generate_html(self.path_markdown, css, template)
 
-    def generate_html(self, tgt):
+    def generate_html(self, tgt, css, template):
         tgt = p(tgt).resolve()
         print("---")
         print(f"convert tgt: \n{tgt}")
@@ -46,8 +50,8 @@ class Md2Html():
                 item.chmod(0o777)
             os.chdir(tmp_wd / p("work"))
 
-            css = p(tmp_wd) / p("style/test.css")
-            template = p(tmp_wd) / p("style/test.html")
+            css = p(tmp_wd) / p(css)
+            template = p(tmp_wd) / p(template)
             cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" --toc --toc-depth=3 --template={template} -t html5'
 
             subprocess.run(cmd.split(' '))
@@ -57,8 +61,8 @@ class Md2Html():
         print(f"Done!! output: \n{outfile}")
         self.path_html = p(outfile).absolute().as_posix()
 
-def main(tgt):
-    m2h = Md2Html(tgt)
+def main(tgt,    css="style/test.css",     template="style/test.html"):
+    m2h = Md2Html(tgt, css, template)
     return m2h
 
 if __name__ == '__main__':
