@@ -8,11 +8,15 @@ import pandas as pd
 import json
 import datetime
 
+from pprint import pprint as pp
+
 import md2html
 
 DEBUG = True
-MD_SOURCE_DIR = "./mdsample"
-LAST_CONVERSION = MD_SOURCE_DIR + "/last_conversion.json"
+SOURCE_DIR = "mdsample"
+LAST_CONVERSION = SOURCE_DIR + "/last_conversion.json"
+TOC_DEPTH = 2
+
 
 class Markdowns():
     def __init__(self, renewal=False) -> None:
@@ -25,7 +29,9 @@ class Markdowns():
 
         # 今回の変換対象リスト作成
         self.mds = {}
-        for md in p(MD_SOURCE_DIR).glob("**/*.md"):
+        mds = list(p(SOURCE_DIR).glob("**/*.md"))
+        mds = [x for x in mds if not x.name.startswith("_")]
+        for md in mds:
             path = p(md).as_posix()
             # path = p(md).resolve().as_posix()
             stamp = datetime.datetime.fromtimestamp(p(md).stat().st_ctime).strftime('%Y%m%d-%H%M%S')
@@ -49,11 +55,16 @@ class Markdowns():
                 self.conv_a_file(path)
 
         # 目次を作成
-        htmls = [self.mds[x]["html"] for x in self.mds]
-        self.make_toc(htmls)
+        self.make_toc(self.mds)
+        print("-----------------------------------")
+        print(self.mds)
+        pp(self.mds)
+        print("--- 未実装機能 --------------------------------")
+        print("hierpan.py専用のcssとtemplateを新たに作成し、左カラムにtoc.htmlを読み込むようにiframeを使う。")
+        print("-----------------------------------")
 
         # 変換完了したらリストを更新
-        self.show_list()
+        # self.show_list()
         self.write_conv_log(self.mds)
 
     # -----------------------------------
@@ -69,14 +80,33 @@ class Markdowns():
     def conv_a_file(self, tgt) -> None:
         m2h = md2html.main(tgt)
 
-    def make_toc(self, htmls) -> None:
-        print(htmls)
-        print("--- 未実装機能 --------------------------------")
-        print("目次作成。toc.htmlを作る")
-        print("hierpan.py専用のcssとtemplateを新たに作成し、左カラムにtoc.htmlを読み込むようにiframeを使う。")
-        print("-----------------------------------")
-        pass
+    def make_toc(self, mds) -> None:
+        toc = "**Table of Contents**\n\n"
+        for md in mds:
+            html = self.mds[md]["html"]
+            relpath = p(html).parent.as_posix()
+            dirname = relpath.split("/")[-1]
+            depth = len(relpath.split("/"))
+            mds[md]["dirname"] = dirname
+            mds[md]["relpath"] = relpath
+            mds[md]["depth"] = depth
 
+        for md in mds:
+            if mds[md]["depth"] <= TOC_DEPTH:
+                link = mds[md]["html"].replace(f"{SOURCE_DIR}/", "")
+                print(link)
+                title = p(link).stem
+                indent = "    " * (int(mds[md]["depth"]) - 1)
+                link_md = f'{indent}- [{title}]({link})'
+                mds[md]["link_md"] = link_md
+                toc += link_md + "\n"
+
+        toc_path = f"{SOURCE_DIR}/_toc.md"
+        with open(toc_path, "w") as f:
+            f.write(toc)
+        self.conv_a_file(toc_path)
+
+        
 
     def write_conv_log(self, mds) -> None:
         with open(LAST_CONVERSION, "w", encoding="utf-8") as f:
