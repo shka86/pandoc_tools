@@ -19,7 +19,7 @@ TREE_TITLE = "my tree"
 DEBUG = True
 SOURCE_DIR = "mdsample"
 LAST_CONVERSION = SOURCE_DIR + "/last_conversion.json"
-TOC_DEPTH = 2
+TOC_DEPTH = 3
 TOCNAME = "_toc"
 # -----------------------------------
 
@@ -110,26 +110,38 @@ class Markdowns():
         m2h = md2html.main(tgt, css="style/hier.css", template="style/hier.html")
 
     def make_toc(self, mds) -> None:
-        toc = "**Table of Contents**\n\n"
+        toc = f"# {TREE_TITLE}: Table of Contents\n"
         for md in mds.values():
             html = md["html"]
             relpath = p(html).parent.as_posix()
-            dirname = relpath.split("/")[-1]
+            dirpath = p(relpath).absolute().as_posix()
             depth = len(relpath.split("/"))
-            md["dirname"] = dirname
+            md["dirpath"] = dirpath
             md["relpath"] = relpath
             md["depth"] = depth
 
-        for depth in range(1, TOC_DEPTH + 1):
-            for md in mds.values():
-                if md["depth"] == depth:
-                    link = md["html"].replace(f"{SOURCE_DIR}/", "")
-                    print(link)
-                    title = p(link).stem
-                    indent = "    " * (int(md["depth"]) - 1)
-                    link_md = f'{indent}- [{title}]({link})'
+        dir_list = [p(SOURCE_DIR).absolute().as_posix()]
+        print(dir_list)
+        # for depth in range(1, TOC_DEPTH + 1):
+        for md in mds.values():
+            if md["depth"] <= TOC_DEPTH:
+
+                if md["dirpath"] not in dir_list:
+                    dir_list.append(md["dirpath"])
+
+                    indent = "#" * (int(md["depth"]))
+                    link_md = f'{indent} [{md["dirpath"].split("/")[-1]}]({md["dirpath"]})  '
                     md["link_md"] = link_md
-                    toc += link_md + "\n"
+                    toc += "\n" + link_md + "\n"
+
+                link = md["html"].replace(f"{SOURCE_DIR}/", "")
+                print(link)
+                title = p(link).stem
+                indent = "    " * (int(md["depth"]) - 1)
+                # link_md = f'{indent}- [{title}]({link})  '
+                link_md = f'- [{title}]({link})  '
+                md["link_md"] = link_md
+                toc += link_md + "\n"
 
         toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
         with open(toc_path, "w") as f:
@@ -192,6 +204,7 @@ class Markdowns():
     def show_list(self) -> None:
         for key in self.mds.keys():
             print(f'stamp: {self.mds[key]["stamp"]}, file: {self.mds[key]["path"]}')
+        pp(self.mds)
 
 
 # -----------------------------------
@@ -212,4 +225,4 @@ def main(args):
 if __name__ == '__main__':
 
     x = Markdowns()
-    # x.show_list()
+    x.show_list()
