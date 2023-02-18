@@ -16,6 +16,7 @@ import datetime
     TemporaryDirectory で作業場所を作って実行する。
 """
 
+
 class Md2Html():
     def __init__(self, markdown, css, template) -> None:
         self.css = css
@@ -53,7 +54,6 @@ class Md2Html():
             css = p(tmp_wd) / p(css)
             template = p(tmp_wd) / p(template)
             cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" --toc --toc-depth=3 --template={template} -t html5'
-
             subprocess.run(cmd.split(' '))
 
             os.chdir(cwd)
@@ -61,9 +61,11 @@ class Md2Html():
         print(f"Done!! output: \n{outfile}")
         self.path_html = p(outfile).absolute().as_posix()
 
-def main(tgt,    css="style/test.css",     template="style/test.html"):
+
+def main(tgt, css="style/test.css", template="style/test.html"):
     m2h = Md2Html(tgt, css, template)
     return m2h
+
 
 if __name__ == '__main__':
     args = sys.argv

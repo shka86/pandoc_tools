@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 from pathlib import Path as p
 import argparse
@@ -12,41 +13,70 @@ from pprint import pprint as pp
 
 import md2html
 
+# --- htmlツリー管理向け変数 --------------------------------
+TREE_TITLE = "my tree"
+# --- このスクリプト開発向け変数 --------------------------------
 DEBUG = True
 SOURCE_DIR = "mdsample"
 LAST_CONVERSION = SOURCE_DIR + "/last_conversion.json"
 TOC_DEPTH = 2
+TOCNAME = "_toc"
+# -----------------------------------
 
 
 class Markdowns():
-    def __init__(self, renewal=False) -> None:
+    def __init__(self) -> None:
 
+        args = self.argparser()
+
+        # --- 対象リスト生成 --------------------------------
         # 前回の変換リスト読み込み
-        if renewal:
+        if args.renewal or args.delete:
             self.last_mds = {}
         else:
             self.last_mds = self.read_last_conv()
 
-        # 今回の変換対象リスト作成
+        # 今回の対象リスト作成
         self.mds = {}
         mds = list(p(SOURCE_DIR).glob("**/*.md"))
         mds = [x for x in mds if not x.name.startswith("_")]
         for md in mds:
             path = p(md).as_posix()
-            # path = p(md).resolve().as_posix()
-            stamp = datetime.datetime.fromtimestamp(p(md).stat().st_ctime).strftime('%Y%m%d-%H%M%S')
-            html = path.replace(".md", ".html")
-
             self.mds[path] = {
                 "path": path,
-                "html": html,
-                "stamp": stamp,
+                "html": path.replace(".md", ".html"),
+                "stamp": datetime.datetime.fromtimestamp(p(md).stat().st_ctime).strftime('%Y/%m/%d-%H:%M:%S'),
             }
 
+        # --- html生成 or html削除 --------------------------------
+        # 削除
+        if args.delete:
+            self.mds = self.delete_htmls(self.mds)
+
+        # 生成
+        else:
+            self.toc_path = self.gen_html_tree(self.mds, self.last_mds)
+            self.insert_header_to_htmls(self.mds, self.toc_path)
+
+        # --- 変換完了したらリストを更新 --------------------------------
+        self.write_conv_log(self.mds)
+
+    # -----------------------------------
+    def argparser(self):
+        parser = argparse.ArgumentParser(description='Nothing')
+        parser.add_argument('-r', '--renewal', action="store_true", default=False, help='全mdを変換しなおす')
+        parser.add_argument('-d', '--delete', action="store_true", default=False, help='全htmlを削除(mdが存在するものに限る)')
+        args = parser.parse_args()
+        return args
+
+    def gen_html_tree(self, mds, last_mds):
+        for md in mds.values():
+            path = md["path"]
+            stamp = md["stamp"]
             # md -> html 変換
-            if path not in self.last_mds.keys():  # 新しく追加されたファイル
+            if path not in last_mds.keys():  # 新しく追加されたファイル
                 do_conv = True
-            elif stamp != self.last_mds[path]["stamp"]:  # 更新されたファイル
+            elif stamp != last_mds[path]["stamp"]:  # 更新されたファイル
                 do_conv = True
             else:  # 更新がないファイル（前回htmlに変換済）
                 do_conv = False
@@ -55,19 +85,18 @@ class Markdowns():
                 self.conv_a_file(path)
 
         # 目次を作成
-        self.make_toc(self.mds)
-        print("-----------------------------------")
-        print(self.mds)
-        pp(self.mds)
-        print("--- 未実装機能 --------------------------------")
-        print("hierpan.py専用のcssとtemplateを新たに作成し、左カラムにtoc.htmlを読み込むようにiframeを使う。")
-        print("-----------------------------------")
+        toc_path = self.make_toc(self.mds)
+        return toc_path
 
-        # 変換完了したらリストを更新
-        # self.show_list()
-        self.write_conv_log(self.mds)
-
-    # -----------------------------------
+    def delete_htmls(self, mds):
+        for md in mds.values():
+            tgt = md["html"]
+            if p(tgt).is_file():
+                os.remove()
+                md["stamp"] = "html_deleted"
+            else:
+                md["stamp"] = "html_notfound"
+        return mds
 
     def read_last_conv(self) -> None:
         if p(LAST_CONVERSION).is_file():
@@ -78,40 +107,87 @@ class Markdowns():
         return last_mds
 
     def conv_a_file(self, tgt) -> None:
-        m2h = md2html.main(tgt)
+        m2h = md2html.main(tgt, css="style/hier.css", template="style/hier.html")
 
     def make_toc(self, mds) -> None:
         toc = "**Table of Contents**\n\n"
-        for md in mds:
-            html = self.mds[md]["html"]
+        for md in mds.values():
+            html = md["html"]
             relpath = p(html).parent.as_posix()
             dirname = relpath.split("/")[-1]
             depth = len(relpath.split("/"))
-            mds[md]["dirname"] = dirname
-            mds[md]["relpath"] = relpath
-            mds[md]["depth"] = depth
+            md["dirname"] = dirname
+            md["relpath"] = relpath
+            md["depth"] = depth
 
-        for md in mds:
-            if mds[md]["depth"] <= TOC_DEPTH:
-                link = mds[md]["html"].replace(f"{SOURCE_DIR}/", "")
-                print(link)
-                title = p(link).stem
-                indent = "    " * (int(mds[md]["depth"]) - 1)
-                link_md = f'{indent}- [{title}]({link})'
-                mds[md]["link_md"] = link_md
-                toc += link_md + "\n"
+        for depth in range(1, TOC_DEPTH + 1):
+            for md in mds.values():
+                if md["depth"] == depth:
+                    link = md["html"].replace(f"{SOURCE_DIR}/", "")
+                    print(link)
+                    title = p(link).stem
+                    indent = "    " * (int(md["depth"]) - 1)
+                    link_md = f'{indent}- [{title}]({link})'
+                    md["link_md"] = link_md
+                    toc += link_md + "\n"
 
-        toc_path = f"{SOURCE_DIR}/_toc.md"
+        toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
         with open(toc_path, "w") as f:
             f.write(toc)
         self.conv_a_file(toc_path)
+        return toc_path
 
-        
+    def insert_header_to_htmls(self, mds, toc_path):
+        """ すべてのページにTOCへのリンクなどを挿入する
+            ※ iframeではやりたいことできなかった。リンクを踏んでもiframe内が更新されるだけだった。
+            pandoc で生成するページに<header>タグがつくようtemplateを仕込んでおき、いったん生成した後にhtmlを直接編集する。
+        """
+        # 各ページの編集
+        for md in mds.values():
+            html = md["html"]
+            mdfullpath = p(md["path"]).resolve().as_posix()
+            mdparentpath = p(md["path"]).parent.resolve().as_posix()
+            tocfullpath = p(toc_path).resolve().as_posix().replace(".md", ".html")
+            htmlupdate = md["stamp"]
+
+            with open(html, "r", encoding='utf-8') as f:
+                body = f.read()
+
+            header_toc = f'<a class="headerlink_toc" href="{tocfullpath}"> {TREE_TITLE} TOC</a>'
+            header_dir = f'<a class="headerlink" href="{mdparentpath}"> source_dir</a>'
+            header_source = f'<a class="headerlink" href="{mdfullpath}"> source_file</a>'
+            header_update = f'<span class="headerupdate">htmlgen@{htmlupdate}</span>'
+
+            body = body.replace(
+                "HEREISHEADERHEREISHEADERHEREISHEADER",
+                f"{header_toc}  {header_dir} / {header_source} {header_update}"
+            )
+
+            with open(html, "w", encoding='utf-8') as f:
+                f.write(body)
+
+        # TOCの編集
+        with open(tocfullpath, "r", encoding='utf-8') as f:
+            body = f.read()
+
+        tocparentpath = p(tocfullpath).parent.resolve().as_posix()
+        tocmdpath = tocfullpath.replace(".html", ".md")
+        header_toc = f'<a class="headerlink_toc" href="{tocfullpath}"> {TREE_TITLE} TOC</a>'
+        header_dir = f'<a class="headerlink" href="{tocparentpath}"> source_dir</a>'
+        header_source = f'<a class="headerlink" href="{tocmdpath}"> source_file</a>'
+        header_update = f'<span class="headerupdate">source update @ {htmlupdate}</span>'
+
+        body = body.replace(
+            "HEREISHEADERHEREISHEADERHEREISHEADER",
+            f"{header_toc}  {header_dir} / {header_source} {header_update}"
+        )
+
+        with open(tocfullpath, "w", encoding='utf-8') as f:
+            f.write(body)
 
     def write_conv_log(self, mds) -> None:
         with open(LAST_CONVERSION, "w", encoding="utf-8") as f:
             json.dump(mds, f, indent=4, ensure_ascii=False)
-            # json.dump(mds, f, indent=4)
 
     def show_list(self) -> None:
         for key in self.mds.keys():
@@ -122,7 +198,8 @@ class Markdowns():
 
 def argparser():
     parser = argparse.ArgumentParser(description='Nothing')
-    parser.add_argument('--renewal', action="store_true", default=False, help='全mdを変換しなおす')
+    parser.add_argument('-r', '--renewal', action="store_true", default=False, help='全mdを変換しなおす')
+    parser.add_argument('-d', '--delete', action="store_true", default=False, help='全htmlを削除(mdが存在するものに限る)')
     args = parser.parse_args()
     return args
 
@@ -134,9 +211,5 @@ def main(args):
 
 if __name__ == '__main__':
 
-    args = argparser()
-    # main(args)
-
-    print(args)
-    x = Markdowns(args.renewal)
+    x = Markdowns()
     # x.show_list()
