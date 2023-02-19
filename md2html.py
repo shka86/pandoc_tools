@@ -18,16 +18,16 @@ import datetime
 
 
 class Md2Html():
-    def __init__(self, markdown, css, template) -> None:
+    def __init__(self, markdown, css, template, opt_toc) -> None:
         self.css = css
         self.template = template
         self.path_markdown = p(markdown).absolute().as_posix()
         self.path_html = None
         self.stamp = datetime.datetime.fromtimestamp(p(markdown).stat().st_ctime).strftime('%Y%m%d-%H%M%S')
 
-        self.generate_html(self.path_markdown, css, template)
+        self.generate_html(self.path_markdown, css, template, opt_toc)
 
-    def generate_html(self, tgt, css, template):
+    def generate_html(self, tgt, css, template, opt_toc):
         tgt = p(tgt).resolve()
         print("---")
         print(f"convert tgt: \n{tgt}")
@@ -53,7 +53,8 @@ class Md2Html():
 
             css = p(tmp_wd) / p(css)
             template = p(tmp_wd) / p(template)
-            cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" --toc --toc-depth=3 --template={template} -t html5'
+            cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" {opt_toc} --template={template} -t html5'
+            print(cmd)
             subprocess.run(cmd.split(' '))
 
             os.chdir(cwd)
@@ -62,8 +63,8 @@ class Md2Html():
         self.path_html = p(outfile).absolute().as_posix()
 
 
-def main(tgt, css="style/test.css", template="style/test.html"):
-    m2h = Md2Html(tgt, css, template)
+def main(tgt, css="style/test.css", template="style/test.html", opt_toc="--toc --toc-depth=3"):
+    m2h = Md2Html(tgt, css, template, opt_toc)
     return m2h
 
 

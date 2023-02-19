@@ -19,7 +19,7 @@ TREE_TITLE = "my tree"
 DEBUG = True
 SOURCE_DIR = "mdsample"
 LAST_CONVERSION = SOURCE_DIR + "/last_conversion.json"
-TOC_DEPTH = 3
+TOC_DEPTH = 99
 TOCNAME = "_toc"
 # -----------------------------------
 
@@ -106,12 +106,15 @@ class Markdowns():
 
         return last_mds
 
-    def conv_a_file(self, tgt) -> None:
-        m2h = md2html.main(tgt, css="style/hier.css", template="style/hier.html")
+    def conv_a_file(self, tgt, opt_toc="--toc --toc-depth=3") -> None:
+        m2h = md2html.main(tgt, css="style/hier.css", template="style/hier.html", opt_toc=opt_toc)
 
     def make_toc(self, mds) -> None:
-        toc = f"# {TREE_TITLE}: Table of Contents\n"
+        toc = f"# {TREE_TITLE}\n"
+        toc = f""
         for md in mds.values():
+
+            # パス情報の整理
             html = md["html"]
             relpath = p(html).parent.as_posix()
             dirpath = p(relpath).absolute().as_posix()
@@ -122,31 +125,32 @@ class Markdowns():
 
         dir_list = [p(SOURCE_DIR).absolute().as_posix()]
         print(dir_list)
-        # for depth in range(1, TOC_DEPTH + 1):
+
         for md in mds.values():
             if md["depth"] <= TOC_DEPTH:
 
+                # dir行の生成
                 if md["dirpath"] not in dir_list:
                     dir_list.append(md["dirpath"])
 
-                    indent = "#" * (int(md["depth"]))
-                    link_md = f'{indent} [{md["dirpath"].split("/")[-1]}]({md["dirpath"]})  '
+                    indent = "    " * (int(md["depth"])-2)
+                    link_md = f'{indent}- [{md["dirpath"].split("/")[-1]}]({md["dirpath"]})  '
                     md["link_md"] = link_md
                     toc += "\n" + link_md + "\n"
 
+                # ファイル行の生成
                 link = md["html"].replace(f"{SOURCE_DIR}/", "")
                 print(link)
                 title = p(link).stem
-                indent = "    " * (int(md["depth"]) - 1)
-                # link_md = f'{indent}- [{title}]({link})  '
-                link_md = f'- [{title}]({link})  '
+                indent = "    " * (int(md["depth"]) -1)
+                link_md = f'{indent}[{title}]({link})  '
                 md["link_md"] = link_md
                 toc += link_md + "\n"
 
         toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
-        with open(toc_path, "w") as f:
+        with open(toc_path, "w", encoding="utf-8") as f:
             f.write(toc)
-        self.conv_a_file(toc_path)
+        self.conv_a_file(toc_path, opt_toc="--toc")
         return toc_path
 
     def insert_header_to_htmls(self, mds, toc_path):
@@ -168,7 +172,7 @@ class Markdowns():
             header_toc = f'<a class="headerlink_toc" href="{tocfullpath}"> {TREE_TITLE} TOC</a>'
             header_dir = f'<a class="headerlink" href="{mdparentpath}"> source_dir</a>'
             header_source = f'<a class="headerlink" href="{mdfullpath}"> source_file</a>'
-            header_update = f'<span class="headerupdate">htmlgen@{htmlupdate}</span>'
+            header_update = f'<span class="headerupdate">source update @ {htmlupdate}</span>'
 
             body = body.replace(
                 "HEREISHEADERHEREISHEADERHEREISHEADER",
