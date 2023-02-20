@@ -27,6 +27,7 @@ class Md2Html():
 
         self.generate_html(self.path_markdown, css, template, opt_toc)
 
+
     def generate_html(self, tgt, css, template, opt_toc):
         tgt = p(tgt).resolve()
         print("---")

@@ -26,7 +26,19 @@ TOCNAME = "_toc"
 # -----------------------------------
 
 
-class Markdowns():
+class Item():
+    def __init__(self) -> None:
+        self.path = None
+        self.stamp = None
+        self.category = None
+        self.dirpath = None
+        self.depth = None
+        self.html = None
+        self.result = None
+        self.link_md = None
+
+
+class Hierpan():
     def __init__(self) -> None:
         args = self.argparser()
 
@@ -37,14 +49,14 @@ class Markdowns():
         self.last_conversion = LAST_CONVERSION
         self.toc_depth = TOC_DEPTH
         self.tocname = TOCNAME
+        self.toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
 
-        # 未定義の変数（メソッド内で更新）
-        self.toc_path = None
-
+        self.rm_toc()
         # 前回の変換リスト
         self.last_tgts = {} if (args.renewal or args.delete) else self.read_last_conv()
         # 今回の変換対象リスト
         self.tgts = self.get_tgts()
+        self.dirs = []
 
         # --- html生成 or html削除 --------------------------------
         # 削除
@@ -53,11 +65,10 @@ class Markdowns():
         # 生成
         else:
             self.gen_html_tree()  # 個別html生成
-            self.make_toc()  # TOC生成
+            # self.set_placeholder()  # ファイル無しdirに対する措置（微妙だけど）
+            self._make_toc()  # TOC生成
             self.insert_header_to_htmls()
-
-        # --- 変換完了したらリストを更新 --------------------------------
-        self.write_conv_log()
+            self.write_conv_log()
 
     # -----------------------------------
     def argparser(self):
@@ -68,93 +79,163 @@ class Markdowns():
         return args
 
     def read_last_conv(self) -> None:
+        last_tgts = {}
         if p(LAST_CONVERSION).is_file():
-            last_mds = pd.read_json(LAST_CONVERSION, encoding="utf-8")
-        else:
-            last_mds = {}
+            last_log = pd.read_json(LAST_CONVERSION, encoding="utf-8")
+            for last_tgt in last_log:
+                print(last_tgt)
+                print(last_log[last_tgt])
+                last_tgts[last_tgt] = Item()
+                last_tgts[last_tgt].path = last_log[last_tgt]["path"]
+                last_tgts[last_tgt].stamp = last_log[last_tgt]["stamp"]
+                last_tgts[last_tgt].dirpath = last_log[last_tgt]["dirpath"]
+                last_tgts[last_tgt].depth = last_log[last_tgt]["depth"]
+                last_tgts[last_tgt].html = last_log[last_tgt]["html"]
+                last_tgts[last_tgt].result = last_log[last_tgt]["result"]
+                last_tgts[last_tgt].link_md = last_log[last_tgt]["link_md"]
 
-        return last_mds
+        return last_tgts
 
     def get_tgts(self):
-        mds = list(p(self.source_dir).glob("**/*.md"))
-        mds = [x for x in mds if not x.name.startswith("_")]
+        items = list(p(self.source_dir).glob("**/*"))
         tgts = {}
-        for md in mds:
-            path = p(md).resolve().as_posix()
-            tgts[path] = {
-                "path": path,
-                "stamp": datetime.datetime.fromtimestamp(p(md).stat().st_ctime).strftime('%Y/%m/%d-%H:%M:%S'),
-            }
+        for item in items:
+            path = p(item).resolve().as_posix()
+            if p(path).is_file() and path.endswith(".md"):
+                category = "md"
+            elif p(path).is_dir():
+                category = "dir"
+            else:
+                category = "others"
+
+            if category in ["md", "dir"]:
+                tgts[path] = Item()
+                tgts[path].path = path
+                tgts[path].stamp = datetime.datetime.fromtimestamp(
+                    p(item).stat().st_ctime).strftime('%Y/%m/%d-%H:%M:%S')
+                tgts[path].category = category
+                tgts[path].depth = len(path.split("/")) - len(self.source_dir.split("/"))
+                tgts[path].dirpath = p(path).parent.as_posix()
+
+        self.tgts = tgts
+        self.show_items()
         return tgts
 
     def delete_htmls(self):
         for tgt in self.tgts.values():
-            html = tgt["html"]
+            html = tgt.path.replace(".md", ".html")
             if p(html).is_file():
                 os.remove(html)
-                tgt["stamp"] = "html_deleted"
+                tgt.stamp = "html_deleted"
             else:
-                tgt["stamp"] = "html_notfound"
+                tgt.stamp = "html_notfound"
+        if p(LAST_CONVERSION).is_file():
+            os.remove(LAST_CONVERSION)
 
     def gen_html_tree(self) -> None:
         for tgt in self.tgts.values():
-            path = tgt["path"]
-            tgt["dirpath"] = p(tgt["path"]).parent.as_posix()
-            tgt["depth"] = len(tgt["path"].split("/")) - len(self.source_dir.split("/"))
-            tgt["html"] = path.replace(".md", ".html")
+            if tgt.category == "md":
 
-            if path not in self.last_tgts.keys():  # 新しく追加されたファイル
-                do_conv = True
-            elif tgt["stamp"] != self.last_tgts[p(path)]["stamp"]:  # 更新されたファイル
-                do_conv = True
-            else:  # 更新がないファイル（前回htmlに変換済）
-                do_conv = False
+                tgt.html = tgt.path.replace(".md", ".html")
 
-            # md -> html 変換
-            if do_conv:
-                m2h = md2html.main(path, css="style/hier.css", template="style/hier.html",
-                                   opt_toc="--toc --toc-depth=3")
-                if m2h.ret.returncode == 0:
-                    tgt["result"] = SUCCESS
-                else:
-                    tgt["result"] = FAILURE
+                print(vars(tgt))
+                if tgt.path not in self.last_tgts.keys():  # 新しく追加されたファイル
+                    do_conv = True
+                elif tgt.stamp != self.last_tgts[tgt.path].stamp:  # 更新されたファイル
+                    do_conv = True
+                else:  # 更新がないファイル（前回htmlに変換済）
+                    do_conv = False
 
-    def make_toc(self) -> None:
-        toc = f""
+                # md -> html 変換
+                if do_conv:
+                    m2h = md2html.main(tgt.path, css="style/hier.css", template="style/hier.html",
+                                       opt_toc="--toc --toc-depth=3")
+                    # print(vars(m2h))
+                    if m2h.ret.returncode == 0:
+                        tgt.result = SUCCESS
+                    else:
+                        tgt.result = FAILURE
 
-        dir_list = [p(self.source_dir).absolute().as_posix()]
-        print(dir_list)
+    def relpath(self, path) -> str:
+        return
 
-        for tgt in self.tgts.values():
-            if tgt["depth"] <= self.toc_depth:
-                pp(tgt)
+    def rm_toc(self) -> None:
+        if p(self.toc_path).is_file():
+            os.remove(self.toc_path)
 
-                # dir行の生成
-                if tgt["dirpath"] not in dir_list:
-                    dir_list.append(tgt["dirpath"])
+    def dir_crawler(self, dir_, depth=0):
+        toc = ""
+        items = list(p(dir_).glob("*"))
 
-                    indent = "    " * (int(tgt["depth"]) - 2)
-                    link_md = f'{indent}- 【 [{tgt["dirpath"].split("/")[-1]}]({tgt["dirpath"]}) 】  '
-                    tgt["link_md"] = link_md
-                    toc += f"\n{link_md}\n"
+        # md処理
+        mds = [p(x).resolve().as_posix() for x in items if p(x).is_file() and str(x).endswith(".md")]
+        for md in mds:
+            html = md.replace(".md", ".html")
+            link = f'{"    "*depth}- [{p(html).stem}]({html})'
+            if p(html).is_file() is False:
+                link += "(link切れ)"
+            toc += f"{link}\n"
 
-                # ファイル行の生成
-                link = tgt["html"].replace(f"{SOURCE_DIR}/", "")
-                print(link)
-                title = p(link).stem
-                indent = "    " * (int(tgt["depth"]) - 1)
-                link_md = f'{indent}　[{title}]({link})  '
-                if tgt["result"] is FAILURE:
-                    link_md += "(link切れ)  "
-                tgt["link_md"] = link_md
-                toc += f"{link_md}\n"
+        # dir処理
+        dirs = [p(x).resolve().as_posix() for x in items if p(x).is_dir()]
+        for dir_ in dirs:
+            link = f'{"    "*depth}- **[{p(dir_).name}]({dir_})**'
+            toc += f"{link}\n"
+            toc += self.dir_crawler(dir_, depth+1)
 
-        toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
-        with open(toc_path, "w", encoding="utf-8") as f:
+        return toc
+
+    def _make_toc(self) -> None:
+
+        toc = self.dir_crawler(self.source_dir)
+
+        with open(self.toc_path, "w", encoding="utf-8") as f:
             f.write(toc)
 
-        m2h = md2html.main(toc_path, css="style/hier.css", template="style/hier.html", opt_toc="--toc")
-        self.toc_path = toc_path
+        m2h = md2html.main(self.toc_path, css="style/hier.css", template="style/hier.html", opt_toc="--toc")
+
+
+
+    # def make_toc(self) -> None:
+    #     toc = f""
+
+    #     done_dir_list = []
+
+    #     dict_order = sorted(self.tgts.keys())
+    #     self.dict_order = dict_order
+
+    #     for d in dict_order:
+    #         tgt = self.tgts[d]
+    #         print(d)
+    #     # for tgt in self.tgts.values():
+    #         # pp(vars(tgt))
+    #         if tgt.depth <= self.toc_depth:
+
+    #             # dir行の生成
+    #             if (tgt.category == "dir") and (tgt.path not in done_dir_list):
+    #                 indent = "    " * (int(tgt.depth) - 1)
+    #                 link_md = f'{indent}- **[{tgt.path.split("/")[-1]}]({tgt.path})**'
+    #                 tgt.link_md = link_md
+    #                 toc += f'{link_md}\n'
+    #                 done_dir_list.append(tgt.path)
+
+    #             elif tgt.category == "md":
+    #                 # ファイル行の生成
+    #                 link = tgt.html
+    #                 # print(link)
+    #                 title = p(link).stem
+    #                 indent = "    " * (int(tgt.depth) - 1)
+    #                 # link_md = f'{indent}　[{title}]({link})  '
+    #                 link_md = f'{indent}- [{title}]({link})'
+    #                 if p(tgt.html).is_file() is False:
+    #                     link_md += "(link切れ)  "
+    #                 tgt.link_md = link_md
+    #                 toc += f"{link_md}\n"
+
+    #     with open(self.toc_path, "w", encoding="utf-8") as f:
+    #         f.write(toc)
+
+    #     m2h = md2html.main(self.toc_path, css="style/hier.css", template="style/hier.html", opt_toc="--toc")
 
     def insert_header_to_htmls(self):
         """ すべてのページにTOCへのリンクなどを挿入する
@@ -163,14 +244,13 @@ class Markdowns():
         """
         # 各ページの編集
         for tgt in self.tgts.values():
-            html = tgt["html"]
-            mdfullpath = p(tgt["path"]).resolve().as_posix()
-            mdparentpath = p(tgt["path"]).parent.resolve().as_posix()
+            html = tgt.html
+            mdfullpath = p(tgt.path).resolve().as_posix()
+            mdparentpath = p(tgt.path).parent.resolve().as_posix()
             tocfullpath = p(self.toc_path).resolve().as_posix().replace(".md", ".html")
-            htmlupdate = tgt["stamp"]
+            htmlupdate = tgt.stamp
 
-
-            if tgt["result"] == "SUCCESS":
+            if tgt.result is SUCCESS:
                 with open(html, "r", encoding='utf-8') as f:
                     body = f.read()
 
@@ -207,16 +287,23 @@ class Markdowns():
             f.write(body)
 
     def write_conv_log(self) -> None:
+        str_json = {}
+        for label, item in self.tgts.items():
+            str_json[label] = vars(item)
         with open(LAST_CONVERSION, "w", encoding="utf-8") as f:
-            json.dump(self.tgts, f, indent=4, ensure_ascii=False)
+            json.dump(str_json, f, indent=4, ensure_ascii=False)
 
     def show_list(self) -> None:
         # for key in self.tgts.keys():
         #     print(f'stamp: {self.tgts[key]["stamp"]}, file: {self.tgts[key]["path"]}')
         pp(self.tgts)
 
+    def show_items(self) -> None:
+        for tgt in self.tgts.values():
+            pp(vars(tgt))
 
 # -----------------------------------
+
 
 def argparser():
     parser = argparse.ArgumentParser(description='Nothing')
@@ -233,5 +320,10 @@ def main(args):
 
 if __name__ == '__main__':
 
-    x = Markdowns()
-    x.show_list()
+    x = Hierpan()
+    # for a in x.dict_order:
+    # # for a in x.tgts.keys():
+    #     print(a)
+    
+    
+    # x.show_list()
