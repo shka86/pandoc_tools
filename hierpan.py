@@ -134,9 +134,9 @@ class Markdowns():
                     dir_list.append(tgt["dirpath"])
 
                     indent = "    " * (int(tgt["depth"]) - 2)
-                    link_md = f'{indent}- [{tgt["dirpath"].split("/")[-1]}]({tgt["dirpath"]})  '
+                    link_md = f'{indent}- 【 [{tgt["dirpath"].split("/")[-1]}]({tgt["dirpath"]}) 】  '
                     tgt["link_md"] = link_md
-                    toc += "\n" + link_md + "\n"
+                    toc += f"\n{link_md}\n"
 
                 # ファイル行の生成
                 link = tgt["html"].replace(f"{SOURCE_DIR}/", "")
@@ -144,8 +144,10 @@ class Markdowns():
                 title = p(link).stem
                 indent = "    " * (int(tgt["depth"]) - 1)
                 link_md = f'{indent}[{title}]({link})  '
+                if tgt["result"] is FAILURE:
+                    link_md += "(link切れ)  "
                 tgt["link_md"] = link_md
-                toc += link_md + "\n"
+                toc += f"{link_md}\n"
 
         toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
         with open(toc_path, "w", encoding="utf-8") as f:
@@ -167,21 +169,23 @@ class Markdowns():
             tocfullpath = p(self.toc_path).resolve().as_posix().replace(".md", ".html")
             htmlupdate = tgt["stamp"]
 
-            with open(html, "r", encoding='utf-8') as f:
-                body = f.read()
 
-            header_toc = f'<a class="headerlink_toc" href="{tocfullpath}"> {TREE_TITLE} TOC</a>'
-            header_dir = f'<a class="headerlink" href="{mdparentpath}"> source_dir</a>'
-            header_source = f'<a class="headerlink" href="{mdfullpath}"> source_file</a>'
-            header_update = f'<span class="headerupdate">source update @ {htmlupdate}</span>'
+            if tgt["result"] == "SUCCESS":
+                with open(html, "r", encoding='utf-8') as f:
+                    body = f.read()
 
-            body = body.replace(
-                "HEREISHEADERHEREISHEADERHEREISHEADER",
-                f"{header_toc}  {header_dir} / {header_source} {header_update}"
-            )
+                header_toc = f'<a class="headerlink_toc" href="{tocfullpath}"> {TREE_TITLE} TOC</a>'
+                header_dir = f'<a class="headerlink" href="{mdparentpath}"> source_dir</a>'
+                header_source = f'<a class="headerlink" href="{mdfullpath}"> source_file</a>'
+                header_update = f'<span class="headerupdate">source update @ {htmlupdate}</span>'
 
-            with open(html, "w", encoding='utf-8') as f:
-                f.write(body)
+                body = body.replace(
+                    "HEREISHEADERHEREISHEADERHEREISHEADER",
+                    f"{header_toc}  {header_dir} / {header_source} {header_update}"
+                )
+
+                with open(html, "w", encoding='utf-8') as f:
+                    f.write(body)
 
         # TOCの編集
         with open(tocfullpath, "r", encoding='utf-8') as f:
