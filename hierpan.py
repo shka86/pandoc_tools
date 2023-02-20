@@ -143,7 +143,7 @@ class Markdowns():
                 print(link)
                 title = p(link).stem
                 indent = "    " * (int(tgt["depth"]) - 1)
-                link_md = f'{indent}[{title}]({link})  '
+                link_md = f'{indent}　[{title}]({link})  '
                 if tgt["result"] is FAILURE:
                     link_md += "(link切れ)  "
                 tgt["link_md"] = link_md
