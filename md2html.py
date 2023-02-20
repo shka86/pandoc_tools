@@ -55,12 +55,16 @@ class Md2Html():
             template = p(tmp_wd) / p(template)
             cmd = f'pandoc {tgt} -o {outfile} -s --self-contained -c {css} --metadata pagetitle="{pagetitle}" {opt_toc} --template={template} -t html5'
             print(cmd)
-            subprocess.run(cmd.split(' '))
+            self.ret = subprocess.run(cmd.split(' '))
 
             os.chdir(cwd)
 
-        print(f"Done!! output: \n{outfile}")
-        self.path_html = p(outfile).absolute().as_posix()
+        if self.ret.returncode == 0:
+            print(f"Done!! output: \n{outfile}")
+            self.path_html = p(outfile).absolute().as_posix()
+        else:
+            print(f"Error!! output: \n{outfile}")
+            self.path_html = "not converted"
 
 
 def main(tgt, css="style/test.css", template="style/test.html", opt_toc="--toc --toc-depth=3"):

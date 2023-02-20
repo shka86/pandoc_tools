@@ -3,6 +3,7 @@
 
 import os
 import sys
+from sre_constants import FAILURE, SUCCESS
 from pathlib import Path as p
 import argparse
 import pandas as pd
@@ -18,6 +19,7 @@ TREE_TITLE = "my tree"
 # --- このスクリプト開発向け変数 --------------------------------
 DEBUG = True
 SOURCE_DIR = "mdsample"
+# SOURCE_DIR = "../mdsamples"
 LAST_CONVERSION = SOURCE_DIR + "/last_conversion.json"
 TOC_DEPTH = 99
 TOCNAME = "_toc"
@@ -26,40 +28,36 @@ TOCNAME = "_toc"
 
 class Markdowns():
     def __init__(self) -> None:
-
         args = self.argparser()
 
-        # --- 対象リスト生成 --------------------------------
-        # 前回の変換リスト読み込み
-        if args.renewal or args.delete:
-            self.last_mds = {}
-        else:
-            self.last_mds = self.read_last_conv()
+        # 環境に関する変数
+        self.tree_title = TREE_TITLE
+        self.debug = DEBUG
+        self.source_dir = p(SOURCE_DIR).resolve().as_posix()
+        self.last_conversion = LAST_CONVERSION
+        self.toc_depth = TOC_DEPTH
+        self.tocname = TOCNAME
 
-        # 今回の対象リスト作成
-        self.mds = {}
-        mds = list(p(SOURCE_DIR).glob("**/*.md"))
-        mds = [x for x in mds if not x.name.startswith("_")]
-        for md in mds:
-            path = p(md).as_posix()
-            self.mds[path] = {
-                "path": path,
-                "html": path.replace(".md", ".html"),
-                "stamp": datetime.datetime.fromtimestamp(p(md).stat().st_ctime).strftime('%Y/%m/%d-%H:%M:%S'),
-            }
+        # 未定義の変数（メソッド内で更新）
+        self.toc_path = None
+
+        # 前回の変換リスト
+        self.last_tgts = {} if (args.renewal or args.delete) else self.read_last_conv()
+        # 今回の変換対象リスト
+        self.tgts = self.get_tgts()
 
         # --- html生成 or html削除 --------------------------------
         # 削除
         if args.delete:
-            self.mds = self.delete_htmls(self.mds)
-
+            self.tgts = self.delete_htmls()
         # 生成
         else:
-            self.toc_path = self.gen_html_tree(self.mds, self.last_mds)
-            self.insert_header_to_htmls(self.mds, self.toc_path)
+            self.gen_html_tree()  # 個別html生成
+            self.make_toc()  # TOC生成
+            self.insert_header_to_htmls()
 
         # --- 変換完了したらリストを更新 --------------------------------
-        self.write_conv_log(self.mds)
+        self.write_conv_log()
 
     # -----------------------------------
     def argparser(self):
@@ -69,35 +67,6 @@ class Markdowns():
         args = parser.parse_args()
         return args
 
-    def gen_html_tree(self, mds, last_mds):
-        for md in mds.values():
-            path = md["path"]
-            stamp = md["stamp"]
-            # md -> html 変換
-            if path not in last_mds.keys():  # 新しく追加されたファイル
-                do_conv = True
-            elif stamp != last_mds[path]["stamp"]:  # 更新されたファイル
-                do_conv = True
-            else:  # 更新がないファイル（前回htmlに変換済）
-                do_conv = False
-
-            if do_conv:
-                self.conv_a_file(path)
-
-        # 目次を作成
-        toc_path = self.make_toc(self.mds)
-        return toc_path
-
-    def delete_htmls(self, mds):
-        for md in mds.values():
-            tgt = md["html"]
-            if p(tgt).is_file():
-                os.remove()
-                md["stamp"] = "html_deleted"
-            else:
-                md["stamp"] = "html_notfound"
-        return mds
-
     def read_last_conv(self) -> None:
         if p(LAST_CONVERSION).is_file():
             last_mds = pd.read_json(LAST_CONVERSION, encoding="utf-8")
@@ -106,65 +75,97 @@ class Markdowns():
 
         return last_mds
 
-    def conv_a_file(self, tgt, opt_toc="--toc --toc-depth=3") -> None:
-        m2h = md2html.main(tgt, css="style/hier.css", template="style/hier.html", opt_toc=opt_toc)
+    def get_tgts(self):
+        mds = list(p(self.source_dir).glob("**/*.md"))
+        mds = [x for x in mds if not x.name.startswith("_")]
+        tgts = {}
+        for md in mds:
+            path = p(md).resolve().as_posix()
+            tgts[path] = {
+                "path": path,
+                "stamp": datetime.datetime.fromtimestamp(p(md).stat().st_ctime).strftime('%Y/%m/%d-%H:%M:%S'),
+            }
+        return tgts
 
-    def make_toc(self, mds) -> None:
-        toc = f"# {TREE_TITLE}\n"
+    def delete_htmls(self):
+        for tgt in self.tgts.values():
+            html = tgt["html"]
+            if p(html).is_file():
+                os.remove(html)
+                tgt["stamp"] = "html_deleted"
+            else:
+                tgt["stamp"] = "html_notfound"
+
+    def gen_html_tree(self) -> None:
+        for tgt in self.tgts.values():
+            path = tgt["path"]
+            tgt["dirpath"] = p(tgt["path"]).parent.as_posix()
+            tgt["depth"] = len(tgt["path"].split("/")) - len(self.source_dir.split("/"))
+            tgt["html"] = path.replace(".md", ".html")
+
+            if path not in self.last_tgts.keys():  # 新しく追加されたファイル
+                do_conv = True
+            elif tgt["stamp"] != self.last_tgts[p(path)]["stamp"]:  # 更新されたファイル
+                do_conv = True
+            else:  # 更新がないファイル（前回htmlに変換済）
+                do_conv = False
+
+            # md -> html 変換
+            if do_conv:
+                m2h = md2html.main(path, css="style/hier.css", template="style/hier.html",
+                                   opt_toc="--toc --toc-depth=3")
+                if m2h.ret.returncode == 0:
+                    tgt["result"] = SUCCESS
+                else:
+                    tgt["result"] = FAILURE
+
+    def make_toc(self) -> None:
         toc = f""
-        for md in mds.values():
 
-            # パス情報の整理
-            html = md["html"]
-            relpath = p(html).parent.as_posix()
-            dirpath = p(relpath).absolute().as_posix()
-            depth = len(relpath.split("/"))
-            md["dirpath"] = dirpath
-            md["relpath"] = relpath
-            md["depth"] = depth
-
-        dir_list = [p(SOURCE_DIR).absolute().as_posix()]
+        dir_list = [p(self.source_dir).absolute().as_posix()]
         print(dir_list)
 
-        for md in mds.values():
-            if md["depth"] <= TOC_DEPTH:
+        for tgt in self.tgts.values():
+            if tgt["depth"] <= self.toc_depth:
+                pp(tgt)
 
                 # dir行の生成
-                if md["dirpath"] not in dir_list:
-                    dir_list.append(md["dirpath"])
+                if tgt["dirpath"] not in dir_list:
+                    dir_list.append(tgt["dirpath"])
 
-                    indent = "    " * (int(md["depth"])-2)
-                    link_md = f'{indent}- [{md["dirpath"].split("/")[-1]}]({md["dirpath"]})  '
-                    md["link_md"] = link_md
+                    indent = "    " * (int(tgt["depth"]) - 2)
+                    link_md = f'{indent}- [{tgt["dirpath"].split("/")[-1]}]({tgt["dirpath"]})  '
+                    tgt["link_md"] = link_md
                     toc += "\n" + link_md + "\n"
 
                 # ファイル行の生成
-                link = md["html"].replace(f"{SOURCE_DIR}/", "")
+                link = tgt["html"].replace(f"{SOURCE_DIR}/", "")
                 print(link)
                 title = p(link).stem
-                indent = "    " * (int(md["depth"]) -1)
+                indent = "    " * (int(tgt["depth"]) - 1)
                 link_md = f'{indent}[{title}]({link})  '
-                md["link_md"] = link_md
+                tgt["link_md"] = link_md
                 toc += link_md + "\n"
 
         toc_path = f"{SOURCE_DIR}/{TOCNAME}.md"
         with open(toc_path, "w", encoding="utf-8") as f:
             f.write(toc)
-        self.conv_a_file(toc_path, opt_toc="--toc")
-        return toc_path
 
-    def insert_header_to_htmls(self, mds, toc_path):
+        m2h = md2html.main(toc_path, css="style/hier.css", template="style/hier.html", opt_toc="--toc")
+        self.toc_path = toc_path
+
+    def insert_header_to_htmls(self):
         """ すべてのページにTOCへのリンクなどを挿入する
             ※ iframeではやりたいことできなかった。リンクを踏んでもiframe内が更新されるだけだった。
             pandoc で生成するページに<header>タグがつくようtemplateを仕込んでおき、いったん生成した後にhtmlを直接編集する。
         """
         # 各ページの編集
-        for md in mds.values():
-            html = md["html"]
-            mdfullpath = p(md["path"]).resolve().as_posix()
-            mdparentpath = p(md["path"]).parent.resolve().as_posix()
-            tocfullpath = p(toc_path).resolve().as_posix().replace(".md", ".html")
-            htmlupdate = md["stamp"]
+        for tgt in self.tgts.values():
+            html = tgt["html"]
+            mdfullpath = p(tgt["path"]).resolve().as_posix()
+            mdparentpath = p(tgt["path"]).parent.resolve().as_posix()
+            tocfullpath = p(self.toc_path).resolve().as_posix().replace(".md", ".html")
+            htmlupdate = tgt["stamp"]
 
             with open(html, "r", encoding='utf-8') as f:
                 body = f.read()
@@ -201,14 +202,14 @@ class Markdowns():
         with open(tocfullpath, "w", encoding='utf-8') as f:
             f.write(body)
 
-    def write_conv_log(self, mds) -> None:
+    def write_conv_log(self) -> None:
         with open(LAST_CONVERSION, "w", encoding="utf-8") as f:
-            json.dump(mds, f, indent=4, ensure_ascii=False)
+            json.dump(self.tgts, f, indent=4, ensure_ascii=False)
 
     def show_list(self) -> None:
-        for key in self.mds.keys():
-            print(f'stamp: {self.mds[key]["stamp"]}, file: {self.mds[key]["path"]}')
-        pp(self.mds)
+        # for key in self.tgts.keys():
+        #     print(f'stamp: {self.tgts[key]["stamp"]}, file: {self.tgts[key]["path"]}')
+        pp(self.tgts)
 
 
 # -----------------------------------
