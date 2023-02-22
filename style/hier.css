@@ -68,6 +68,8 @@
     flex-direction: column;
     background-color: #EEEEEE;
     overflow-y: auto;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 #sidebar * {
