@@ -68,6 +68,8 @@ class Cpan():
             print(f'{i}: {x}')
         print('-----------------------------------')
         tgtnum = input('Select a number: ')
+        if tgtnum == "":
+            tgtnum = 0
         return str(histories[int(tgtnum)])
 
     def conv_a_dir(self, tgt):
